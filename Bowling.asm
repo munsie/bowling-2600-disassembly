@@ -6,14 +6,35 @@
 ;
 ; ------------------------------------------------------------------------------
 
-  processor 6502
-  include vcs.h
+  .processor 6502
+  .include vcs.h
 
+; ------------------------------------------------------------------------------
+;   Versions
+;
+;   We can build the following versions of Bowling by specifying the VERSION on
+;   dasm's command line.  Default is the NTSC version.
+;     
+;     0: Bowling (1979) (Atari)
+;     1: Bowling (32 in 1) (1988) (Atari) (PAL)
+; ------------------------------------------------------------------------------
+NTSC_VERSION = 0
+PAL_VERSION = 1
+
+; Default to building for NTSC
+  .ifnconst VERSION
+VERSION = NTSC_VERSION
+  .endif
+  
+  .if VERSION > PAL_VERSION
+    .err "Unknown VERSION specified - ", VERSION
+  .endif
+  
 ; ------------------------------------------------------------------------------
 ;   RAM
 ; ------------------------------------------------------------------------------
   seg.u RAM
-  org $80
+  .org $80
 Frame_Count       ds 1            ; incremented once every frame
 ram_81            ds 1              
 ram_82            ds 1              
@@ -103,9 +124,9 @@ ram_DA            ds 1
 ; ------------------------------------------------------------------------------
 ;   Start of ROM
 ; ------------------------------------------------------------------------------
-  seg Code
-  org $f000
-Entry subroutine
+  .seg Code
+  .org $f000
+Entry .subroutine
           SEI                     ; disable interrupts
           CLD                     ; clear decimal mode
                                   
@@ -121,7 +142,7 @@ Entry subroutine
           STX TIM8T               
           JMP LF2A7                                            
                                   
-Main_Loop subroutine              
+Main_Loop .subroutine              
           LDA #$42                ; start v-blank 
           STA WSYNC               
           STA VBLANK              
@@ -135,10 +156,11 @@ Main_Loop subroutine
           LDA #$00                ; get ready to turn it off
           STA WSYNC               ; third line
           STA VSYNC               ; done with v-sync
-  .ifconst PAL
-          LDA #$4C                ; start the overscan timer
-  .else
+  .if VERSION = NTSC_VERSION
           LDA #$2D                ; start the overscan timer
+  .endif
+  .if VERSION = PAL_VERSION
+          LDA #$4C                ; start the overscan timer
   .endif
           STA TIM64T              
                                   
@@ -171,7 +193,7 @@ Main_Loop subroutine
 ;     $04 - third row of marks, Scan Lines
 ;     $05 - fourth row of marks, Scan Lines
 ;     $06 - final value, draws rest of the screen
-Kernel_Next_State subroutine
+Kernel_Next_State .subroutine
           LDA #$00                ; (2 = 16) clear out our playfield shadows
           STA ram_D5              ; (3 = 19)
           STA ram_D6              ; (3 = 22)
@@ -188,7 +210,7 @@ Kernel_Next_State subroutine
 ;
 ; Draws the frame/variation and player values portion of the display.
           LDX #$00                ; (2 = 49) use X as the current line in the digit
-Kernel_Top_Digits subroutine  
+Kernel_Top_Digits .subroutine  
 ; Odd scan line
           STA WSYNC               ; (3 = 0) wait for the new line
           LDA ram_D5              ; (3 = 3) load our left side PF1 shadow value
@@ -247,7 +269,7 @@ Kernel_Next_State_B
           JMP Kernel_Next_State   ; (3 = 51) move to the next state
 
 ; Scan Line 51
-Kernel_Init_Score subroutine
+Kernel_Init_Score .subroutine
           LDY #$02                ; (2 = 50) set the playfield colors to be in score mode
           STY CTRLPF              ; (3 = 53)
           LDX #$06                ; (2 = 55) we're going to do six sets of lines
@@ -263,7 +285,7 @@ Kernel_Init_Score subroutine
 ; The code interweaves updating PF1 and PF2 at the right time with generating the values that
 ; will be used in PF1 and PF2 the next time through.
 
-Kernel_Draw_Score subroutine
+Kernel_Draw_Score .subroutine
 ; Sub-Scan Line 1 -- uses the column 1 and 2 offsets to generate the PF1 values that will
 ; be used to draw the score
           STA WSYNC               ; (3 = 0) wait for the new line
@@ -356,7 +378,7 @@ Kernel_Draw_Score subroutine
           JMP Kernel_Draw_Score   ; (3 = 50) do it again
  
 ; Scan Lines 68 - 70, 79 - 81, 90 - 92, 101 - 103, 112    
-Kernel_Init_Marks subroutine
+Kernel_Init_Marks .subroutine
           CMP #$06                ; (2 = 63) are we done with drawing marks?
           BCC .skip               ; (2 = 65) nope, setup for the next row
           JMP LF1D1               ; (3 = 68) yes, move onto the next section
@@ -395,7 +417,7 @@ Kernel_Init_Marks subroutine
           BPL .loop               ; update again for P1
           
 ; Scan Lines - 71 - 78, 82 - 89, 93 - 100, 104 - 111
-Kernel_Draw_Marks subroutine
+Kernel_Draw_Marks .subroutine
 ; Sub-Scan Line 1
           STA WSYNC               ; (3 = 0) wait for the new line
           
@@ -454,7 +476,7 @@ Kernel_Draw_Marks subroutine
           JMP Kernel_Next_State   ; (3 = 69) move to the next state
           
 ; Scan Line 113
-LF1D1 subroutine
+LF1D1 .subroutine
           STA WSYNC
           LDA #$10
           STA $0A
@@ -533,10 +555,11 @@ LF249     DEX
           
           LDA ram_D0
           STA COLUBK
-  .ifconst PAL
-          LDA #$58
-  .else
+  .if VERSION = NTSC_VERSION
           LDA #$39
+  .endif
+  .if VERSION = PAL_VERSION
+          LDA #$58
   .endif
           STA TIM64T
           LDA SWCHB
@@ -795,7 +818,7 @@ LF446     LDA INTIM
 ;   End Of Kernel Code
 ; ------------------------------------------------------------------------------
          
-Game_Logic subroutine
+Game_Logic .subroutine
           LDA ram_81
           BPL LF497
           LDX Player_Val
@@ -1121,7 +1144,7 @@ LF6A9     STA AUDV1
 ;       2 - Frame
 ; ------------------------------------------------------------------------------
 
-Add_1_Score subroutine
+Add_1_Score .subroutine
           LDA #1                  ; we're adding just 1
 Add_A_Score                     
           SED                     ; use decimal mode for this
@@ -1136,7 +1159,7 @@ Add_A_Score
           
 ; ------------------------------------------------------------------------------
 
-LF6BA subroutine
+LF6BA .subroutine
           STA Temp
           LDY ram_B9,X
           LDA #$00
@@ -1165,7 +1188,7 @@ LF6EC     RTS
 
 ; ------------------------------------------------------------------------------
 
-LF6ED subroutine
+LF6ED .subroutine
           STA Temp
           LDA Frame_Val
           CMP #$10
@@ -1429,6 +1452,7 @@ LF7F7
      .byte $02               
      .byte $00               
 
+  .org $f7fc
 Reset_Vector
      .word Entry
 LF7FE

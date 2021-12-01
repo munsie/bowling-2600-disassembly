@@ -16,7 +16,7 @@ STELLA = /Applications/Stella.app/Contents/MacOS/Stella
 MD5 = md5 -r
 
 .PHONY: all
-all: $(NTSC_ROM)
+all: $(NTSC_ROM) $(PAL_ROM)
 
 $(NTSC_ROM): $(NAME).asm
 	@echo "===> Building $@ <==="
@@ -25,7 +25,7 @@ $(NTSC_ROM): $(NAME).asm
 	
 $(PAL_ROM): $(NAME).asm
 	@echo "===> Building $@ <==="
-	@$(DASM) $< -I$(DASM_DIR)/machines/atari2600/ -f3 -DPAL -o$@ -s$(basename $@).sym ; tmp=$$? ; if [ $$tmp -ne 0 ]; then rm -f $@ $(basename $@) ; exit $$tmp; fi
+	@$(DASM) $< -I$(DASM_DIR)/machines/atari2600/ -f3 -DVERSION=1 -o$@ -s$(basename $@).sym ; tmp=$$? ; if [ $$tmp -ne 0 ]; then rm -f $@ $(basename $@) ; exit $$tmp; fi
 	@SUM="$$($(MD5) $@ | cut -d' ' -f1)" && if [ "$$SUM" != '$(PAL_ROM_MD5)' ]; then echo "ROM Mismatch!"; exit $(FAIL_ON_MISMATCH); fi
 	
 .PHONY: run
