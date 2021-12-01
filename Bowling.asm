@@ -247,7 +247,7 @@ LF07D     ASL                     ; (2 = 54) multiply A by 5 to get the offset i
           BCC Kernel_Top_Digits   ; (3 = 48) no, do this all over again
           
 Next_State_B
-          JMP Next_State; move to the next state
+          JMP Next_State          ; move to the next state
 
 ; Scan Line 51
 LF0AF
