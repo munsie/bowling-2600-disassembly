@@ -14,97 +14,97 @@
 ; ------------------------------------------------------------------------------
   seg.u RAM
   org $80
-Frame_Count     ds 1              ; incremented once every frame
-ram_81          ds 1              
-ram_82          ds 1              
-ram_83          ds 1              
-ram_84          ds 1              
-ram_85          ds 1              
-ram_86          ds 1              
-ram_87          ds 1              
-ram_88          ds 1              
-ram_89          ds 1              
-ram_8A          ds 1              
-ram_8B          ds 1              
-ram_8C          ds 1              
-ram_8D          ds 1              
-ram_8E          ds 1              
-Player_Val      ds 1              ; current player number (0 is P1, 1 is P2)
-ram_90          ds 1              
-ram_91          ds 1              
-ram_92          ds 1              
-ram_93          ds 1              
-ram_94          ds 1              
-ram_95          ds 1              
-ram_96          ds 1              
-ram_97          ds 1              
-ram_98          ds 1              
-ram_99          ds 1              
-ram_9A          ds 1              
-ram_9B          ds 1              
-ram_9C          ds 1              
-ram_9D          ds 1              
-Ball_X_Pos      ds 1              ; x-position of where the ball should be drawn
-ram_9F          ds 1              
-ram_A0          ds 1              
-Score_Lo_P1     ds 1              ; lower 2 digits of the score for P1 (BCD)
-Score_Lo_P2     ds 1              ; lower 2 digits of the score for P1 (BCD)
-Score_Lo_Frame  ds 1              ; lower 2 digits of the score for current frame (BCD)
-Frame_Val       ds 1              ; frame/variation value (BCD)
-ram_A5          ds 1              
-Score_Hi_P1     ds 1              ; third digit of the score for P1
-Score_Hi_P2     ds 1              ; third digit of the score for P2
-ram_A8          ds 1
-ram_A9          ds 1
-ram_AA          ds 1
-ram_AB          ds 1
-ram_AC          ds 1
-ram_AD          ds 1
-ram_AE          ds 1
-ram_AF          ds 1
-ram_B0          ds 1
-ram_B1          ds 1
-ram_B2          ds 1
-ram_B3          ds 1
-ram_B4          ds 1
-ram_B5          ds 1
-ram_B6          ds 1
-ram_B7          ds 1
-ram_B8          ds 1
-ram_B9          ds 1
-ram_BA          ds 1
-ram_BB          ds 1
-ram_BC          ds 1
-ram_BD          ds 1
-ram_BE          ds 1
-ram_BF          ds 1
-ram_C0          ds 1
-ram_C1          ds 1
-ram_C2          ds 1
-ram_C3          ds 1
-ram_C4          ds 1
-ram_C5          ds 1
-ram_C6          ds 1
-ram_C7          ds 1
-ram_C8          ds 1
-ram_C9          ds 1
-ram_CA          ds 1
-ram_CB          ds 1
-ram_CC          ds 1
-ram_CD          ds 1
-ram_CE          ds 1
-ram_CF          ds 1
-ram_D0          ds 1
-ram_D1          ds 1
-ram_D2          ds 1
-ram_D3          ds 1
-ram_D4          ds 1
-ram_D5          ds 1
-ram_D6          ds 1
-ram_D7          ds 1
-ram_D8          ds 1
-Temp            ds 1
-ram_DA          ds 1
+Frame_Count       ds 1            ; incremented once every frame
+ram_81            ds 1              
+ram_82            ds 1              
+ram_83            ds 1              
+ram_84            ds 1              
+ram_85            ds 1              
+P1_Col_3_Offset   ds 1            ; Offset into Digits or Marks for P1 col 3  
+P2_Col_3_Offset   ds 1            ; Offset into Digits or Marks for P2 col 3
+P1_Col_2_Offset   ds 1            ; Offset into Digits or Marks for P1 col 2
+P2_Col_2_Offset   ds 1            ; Offset into Digits or Marks for P2 col 2
+P1_Col_1_Offset   ds 1            ; Offset into Digits or Marks for P1 col 1  
+P2_Col_1_Offset   ds 1            ; Offset into Digits or Marks for P2 col 1 
+ram_8C            ds 1              
+ram_8D            ds 1              
+ram_8E            ds 1              
+Player_Val        ds 1            ; current player number (0 is P1, 1 is P2)
+ram_90            ds 1              
+ram_91            ds 1              
+ram_92            ds 1              
+ram_93            ds 1              
+ram_94            ds 1              
+ram_95            ds 1              
+ram_96            ds 1              
+ram_97            ds 1              
+ram_98            ds 1              
+ram_99            ds 1              
+ram_9A            ds 1              
+ram_9B            ds 1              
+ram_9C            ds 1              
+ram_9D            ds 1              
+Ball_X_Pos        ds 1            ; x-position of where the ball should be drawn
+ram_9F            ds 1              
+ram_A0            ds 1              
+Score_Lo_P1       ds 1            ; lower 2 digits of the score for P1 (BCD)
+Score_Lo_P2       ds 1            ; lower 2 digits of the score for P1 (BCD)
+Score_Lo_Frame    ds 1            ; lower 2 digits of the score for current frame (BCD)
+Frame_Val         ds 1            ; frame/variation value (BCD)
+ram_A5            ds 1              
+Score_Hi_P1       ds 1            ; third digit of the score for P1
+Score_Hi_P2       ds 1            ; third digit of the score for P2
+ram_A8            ds 1
+ram_A9            ds 1
+ram_AA            ds 1
+ram_AB            ds 1
+ram_AC            ds 1
+ram_AD            ds 1
+ram_AE            ds 1
+ram_AF            ds 1
+ram_B0            ds 1
+ram_B1            ds 1
+ram_B2            ds 1
+ram_B3            ds 1
+ram_B4            ds 1
+ram_B5            ds 1
+ram_B6            ds 1
+ram_B7            ds 1
+ram_B8            ds 1
+ram_B9            ds 1
+ram_BA            ds 1
+ram_BB            ds 1
+ram_BC            ds 1
+ram_BD            ds 1
+ram_BE            ds 1
+ram_BF            ds 1
+ram_C0            ds 1
+ram_C1            ds 1
+ram_C2            ds 1
+ram_C3            ds 1
+ram_C4            ds 1
+ram_C5            ds 1
+ram_C6            ds 1
+ram_C7            ds 1
+ram_C8            ds 1
+ram_C9            ds 1
+ram_CA            ds 1
+ram_CB            ds 1
+ram_CC            ds 1
+ram_CD            ds 1
+ram_CE            ds 1
+ram_CF            ds 1
+ram_D0            ds 1
+ram_D1            ds 1
+ram_D2            ds 1
+ram_D3            ds 1
+ram_D4            ds 1
+ram_D5            ds 1
+ram_D6            ds 1
+ram_D7            ds 1
+ram_D8            ds 1
+Temp              ds 1
+ram_DA            ds 1
 
 ; ------------------------------------------------------------------------------
 ;   Start of ROM
@@ -125,8 +125,7 @@ Entry
           TXS                     
                                   
           STX TIM8T               
-          JMP LF2A7               
-                                  
+          JMP LF2A7                                            
                                   
 Main_Loop subroutine              
           LDA #$42                ; start v-blank 
@@ -195,15 +194,15 @@ Next_State subroutine
 Kernel_Top_Digits subroutine  
 ; Odd scan line
           STA WSYNC               ; (3 = 0) wait for the new line
-          LDA ram_D5              ; (3 = 3) load our left hand PF1 shadow value
+          LDA ram_D5              ; (3 = 3) load our left side PF1 shadow value
           STA PF1                 ; (3 = 6) into PF1
                                   
           LDY #$04                ; (2 = 8) burn 28 cycles
           NOP                     ; (2 = 10)
-.loop     DEY                     ; (2 = 12)
-          BPL .loop               ; (3 = 15, 34)
+.loop     DEY                     ; (2 = 12/17/22/27/32)
+          BPL .loop               ; (3/2 = 15/20/25/30/34)
                                   
-          LDA ram_D6              ; (3 = 37) load our right hand PF1 shadow value
+          LDA ram_D6              ; (3 = 37) load our right side PF1 shadow value
           STA PF1                 ; (3 = 40) into PF1
           STX ram_D7              ; (3 = 43) stash the current line in RAM so we can add it to our offset
           
@@ -226,7 +225,7 @@ LF07D     ASL                     ; (2 = 54) multiply A by 5 to get the offset i
           
 ; Even scan line
 .even     STA WSYNC               ; (3 = 0) wait for the new line
-          LDY ram_D5              ; (3 = 3) load our left hand PF1 shadow value
+          LDY ram_D5              ; (3 = 3) load our left side PF1 shadow value
           STY PF1                 ; (3 = 6) into PF1
           STA ram_D5              ; (3 = 9) now we can safely store the new value into our shadow
                                   
@@ -239,9 +238,10 @@ LF07D     ASL                     ; (2 = 54) multiply A by 5 to get the offset i
           TAY                     ; (2 = 26) move the new index into Y
           LDA Digits,Y            ; (4 = 30) and get the playfield value into A
           AND #$0F                ; (2 = 32) mask off the top 4 bits
-          LDY ram_D6              ; (3 = 35) load our right hand PF1 shadow value
+          LDY ram_D6              ; (3 = 35) load our right side PF1 shadow value
           STA ram_D6              ; (3 = 38) store our new value we just calulated into the shadow
           STY PF1                 ; (3 = 41) now we can update the PF1 register with the old value
+          
           INX                     ; (2 = 43) move to the next line
           CPX #$06                ; (2 = 45) did we draw 6 lines yet?
           BCC Kernel_Top_Digits   ; (3 = 48) no, do this all over again
@@ -251,84 +251,114 @@ Next_State_B
 
 ; Scan Line 51
 LF0AF
-          LDY #$02                ; (2 = 50)
-          STY CTRLPF
-          LDX #$06
-          CMP #$01
-          BEQ LF0BC
-          JMP LF142
+          LDY #$02                ; (2 = 50) set the playfield colors to be in score mode
+          STY CTRLPF              ; (3 = 53)
+          LDX #$06                ; (2 = 55) we're going to do six sets of lines
+          CMP #$01                ; (2 = 57) are we drawing the score or marks?
+          BEQ Kernel_Score        ; (2 = 58) draw the score 
+          JMP Kernel_Marks        ; (3 = 61) draw the marks
           
 ; Scan Lines 52 - 69
-LF0BC subroutine    
+;
+; The score area is 6 sets of 3 scan lines.  There are no WSYNCS within each set of 3 lines.
+; The code interweaves updating PF1 and PF2 at the right time with generating the values that
+; will be used in PF1 and PF2 the next time through.
+
+Kernel_Score subroutine
+; Sub-Scan Line 1 -- uses the column 1 and 2 offsets to generate the PF1 values that will
+; be used to draw the score
           STA WSYNC               ; (3 = 0) wait for the new line
-          LDA ram_D7
-          STA PF1
-          LDA ram_D5
-          STA PF2
-          LDY ram_8A
-          LDA Digits,Y
-          AND #$F0
-          STA ram_D7
-          LDY ram_88
-          LDA Digits,Y
-          AND #$0F
-          ORA ram_D7
-          STA ram_D7
-          LDA ram_D8
-          STA PF1
-          LDA ram_D6
-          STA PF2
-          LDY ram_8B
-          LDA Digits,Y
-          AND #$F0
-          STA ram_D8
-          LDY ram_89
-          LDA Digits,Y
-          AND #$0F
-          ORA ram_D8
-          STA ram_D8
-          DEX
-          BEQ Next_State_B        ; move to the next state
+          LDA ram_D7              ; (3 = 3) load our left side PF1 shadow value
+          STA PF1                 ; (3 = 6) into PF1
+          LDA ram_D5              ; (3 = 9) and our left side PF2 shadow value
+          STA PF2                 ; (3 = 12) into PF2
           
-          LDA ram_D7
-          STA PF1
-          LDY ram_86
-          LDA Digits,Y
-          AND #$0F
-          LSR
-          TAY
-          LDA LF79E,Y
-          STA ram_D5
-          STA PF2
-          LDY ram_87
-          LDA ram_D8
-          STA PF1
-          LDA Digits,Y
-          AND #$0F
-          LSR
-          TAY
-          LDA LF79E,Y
-          STA PF2
-          STA ram_D6
-          INC ram_86
-          INC ram_8A
-          INC ram_87
-          INC ram_8B
-          LDA ram_D7
-          STA PF1
-          LDA ram_D5
-          STA PF2
-          PHA
-          PLA
-          INC ram_88
-          INC ram_89
-          LDA ram_D8
-          STA PF1
-          LDA ram_D6
-          STA PF2
-          JMP LF0BC
+          LDY P1_Col_1_Offset     ; (3 = 15) load the offset to the P1 hundreths digit
+          LDA Digits,Y            ; (4 = 19) and get the pixels
+          AND #$F0                ; (2 = 21) mask off the bottom 4 bits
+          STA ram_D7              ; (3 = 24) store it into our left side PF1 shadow
           
-LF142     CMP #$06
+          LDY P1_Col_2_Offset     ; (3 = 27) load the offset to the P1 tens digit
+          LDA Digits,Y            ; (4 = 31) and get the pixels
+          AND #$0F                ; (2 = 33) mask off the top 4 bits
+          ORA ram_D7              ; (3 = 36) combine it with the value we just stored
+          STA ram_D7              ; (3 = 39) in the left side PF1 shadow
+          
+          LDA ram_D8              ; (3 = 42) load our right side PF1 shadow value
+          STA PF1                 ; (3 = 45) into PF1
+          LDA ram_D6              ; (3 = 48) and our right side PF2 shadow value
+          STA PF2                 ; (3 = 51) into PF2
+          
+          LDY P2_Col_1_Offset     ; (3 = 54) load the offset to the P2 hundreths digit
+          LDA Digits,Y            ; (4 = 58) and get the pixels
+          AND #$F0                ; (2 = 60) mask off the bottom 4 bits
+          STA ram_D8              ; (3 = 63) store it into our right side PF1 shadow
+          
+          LDY P2_Col_2_Offset     ; (3 = 66) oad the offset to the P2 tens digit
+          LDA Digits,Y            ; (4 = 70) and get the pixels
+          AND #$0F                ; (2 = 72) mask off the top 4 bits
+          ORA ram_D8              ; (3 = 75) combine it with the value we just stored
+        
+; Sub-Scan Line 2 -- uses the column 3 offsets to generate the PF2 values that will be used
+; to draw the score
+          STA ram_D8              ; (3 = 2) store it into our right side PF1 shadow
+          
+          DEX                     ; (2 = 4) decrement our line count
+          BEQ Next_State_B        ; (2 = 6) move to the next state if we have no more lines
+          
+          LDA ram_D7              ; (3 = 9) load our left side PF1 shadow value
+          STA PF1                 ; (3 = 12) into PF1
+          
+          LDY P1_Col_3_Offset     ; (3 = 15) load the offset to the P1 ones digit         
+          LDA Digits,Y            ; (4 = 19) and get the pixels
+          AND #$0F                ; (2 = 21) mask off the top 4 bits
+          LSR                     ; (2 = 23) shift right one bit so that we can use this
+          TAY                     ; (2 = 25) as an index
+          LDA Mirror_LUT,Y        ; (4 = 29) into the mirror LUT
+          STA ram_D5              ; (3 = 31) store it into our left side PF2 shadow value
+          STA PF2                 ; (3 = 34) and also into PF2
+          
+          LDY P2_Col_3_Offset     ; (3 = 37) load the offset to the P2 ones digit
+          
+          LDA ram_D8              ; (3 = 40) load our right side PF1 shadow value
+          STA PF1                 ; (3 = 43) into PF1
+          
+          LDA Digits,Y            ; (4 = 47) get the pixels for the P2 ones digit
+          AND #$0F                ; (2 = 49) mask off the top 4 bits
+          LSR                     ; (2 = 51) shift right one bit so that we can use this
+          TAY                     ; (2 = 53) as an index
+          LDA Mirror_LUT,Y        ; (4 = 57) into the mirror LUT
+          STA PF2                 ; (3 = 60) store it into our right side PF2 shadow value
+          STA ram_D6              ; (3 = 63) and also into PF2
+          
+          INC P1_Col_3_Offset     ; (5 = 68) increment each of our offsets
+          INC P1_Col_1_Offset     ; (5 = 73)
+; Sub-Scan Line 3 -- primarily updating the offsets so that the next row will display the
+; correct line in the digits    
+          INC P2_Col_3_Offset     ; (5 = 2)
+          INC P2_Col_1_Offset     ; (5 = 7)
+          
+          LDA ram_D7              ; (3 = 10) load our left side PF1 shadow value
+          STA PF1                 ; (3 = 12) into PF1
+          LDA ram_D5              ; (3 = 15) and our left side PF2 shadow value
+          STA PF2                 ; (3 = 18) into PF2
+          
+          PHA                     ; (3 = 21) burn some cycles
+          PLA                     ; (4 = 25)
+          
+          INC P1_Col_2_Offset     ; (5 = 30) increment the remaining offsets
+          INC P2_Col_2_Offset     ; (5 = 35)
+          
+          LDA ram_D8              ; (3 = 38) load our right side PF1 shadow value
+          STA PF1                 ; (3 = 41) into PF1
+          LDA ram_D6              ; (3 = 44) and our right side PF2 shadow value
+          STA PF2                 ; (3 = 47) into PF2
+     
+          JMP Kernel_Score        ; (3 = 50) do it again
+ 
+; Scan Lines -          
+Kernel_Marks subroutine
+          CMP #$06
           BCC LF149
           JMP LF1D1
 LF149     SBC #$01
@@ -340,10 +370,10 @@ LF150     LDA ram_93,Y
           AND #$03
           ASL
           ASL
-          STA ram_86,X
+          STA P1_Col_3_Offset,X
           LDA ram_93,Y
           AND #$0C
-          STA ram_88,X
+          STA P1_Col_2_Offset,X
           LDA ram_93,Y
           AND #$30
           LSR
@@ -351,33 +381,33 @@ LF150     LDA ram_93,Y
           CMP #$08
           BNE LF16C
           ASL
-LF16C     STA ram_8A,X
+LF16C     STA P1_Col_1_Offset,X
           DEY
           DEX
           BPL LF150
 LF172     STA WSYNC
-          LDY ram_86
+          LDY P1_Col_3_Offset
           LDA Marks_Hi,Y
           STA ram_D5
-          LDY ram_88
+          LDY P1_Col_2_Offset
           LDA Marks_Lo,Y
           ORA ram_D5
           STA PF1
           STA ram_D5
-          LDY ram_8A
+          LDY P1_Col_1_Offset
           LDA Marks_Lo,Y
           STA PF2
           STA ram_D6
           LDA ram_D7
           STA PF1
-          LDY ram_8B
+          LDY P2_Col_1_Offset
           LDA Marks_Lo,Y
           STA PF2
           STA ram_D8
-          LDY ram_87
+          LDY P2_Col_3_Offset
           LDA Marks_Hi,Y
           STA ram_D7
-          LDY ram_89
+          LDY P2_Col_2_Offset
           LDA Marks_Lo,Y
           ORA ram_D7
           STA ram_D7
@@ -385,17 +415,17 @@ LF172     STA WSYNC
           STA PF1
           LDA ram_D6
           STA PF2
-          INC ram_86
-          INC ram_87
-          INC ram_88
-          INC ram_89
-          INC ram_8B
-          INC ram_8A
+          INC P1_Col_3_Offset
+          INC P2_Col_3_Offset
+          INC P1_Col_2_Offset
+          INC P2_Col_2_Offset
+          INC P2_Col_1_Offset
+          INC P1_Col_1_Offset
           LDA ram_D7
           STA PF1
           LDA ram_D8
           STA PF2
-          LDA ram_86
+          LDA P1_Col_3_Offset
           AND #$03
           BNE LF172
           JMP Next_State
@@ -481,7 +511,7 @@ LF249     DEX
           STA ram_81
           LDA #$00
           LDX #$46
-LF271     STA ram_86,X
+LF271     STA P1_Col_3_Offset,X
           DEX
           BPL LF271
           INC Frame_Val
@@ -967,7 +997,7 @@ LF62D     LDA Score_Lo_P1,X
           ASL
           CLC
           ADC ram_D5
-          STA ram_86,X
+          STA P1_Col_3_Offset,X
           LDA Score_Lo_P1,X
           AND #$F0
           LSR
@@ -977,13 +1007,13 @@ LF62D     LDA Score_Lo_P1,X
           LSR
           CLC
           ADC ram_D5
-          STA ram_88,X
+          STA P1_Col_2_Offset,X
           LDA Score_Hi_P1,X
           ASL
           ASL
           CLC
           ADC Score_Hi_P1,X
-          STA ram_8A,X
+          STA P1_Col_1_Offset,X
           DEX
           BPL LF62D
           LDX #$03
@@ -1268,15 +1298,9 @@ LF794
      .byte $01, $01            
      .byte $01, $01
      
-LF79E           
-     .byte $00
-     
-LF79F               
-     .byte $04          
-     .byte $02               
-     .byte $06, $01            
-     .byte $05, $03            
-     .byte $07 
+; Used to mirror the bitmap in the digits for when using in PF2
+Mirror_LUT           
+     .byte $00, $04, $02, $06, $01, $05, $03, $07 
 
 LF7A6              
      .byte $0F               
