@@ -33,14 +33,8 @@ Player_Val        ds 1            ; current player number (0 is P1, 1 is P2)
 ram_90            ds 1              
 ram_91            ds 1              
 ram_92            ds 1              
-ram_93            ds 1              
-ram_94            ds 1              
-ram_95            ds 1              
-ram_96            ds 1              
-ram_97            ds 1              
-ram_98            ds 1              
-ram_99            ds 1              
-ram_9A            ds 1              
+Marks_Array       ds 8            ; array of the marks for both P1 and P2.  Each row is two
+                                  ; bytes, P1 than P2.
 ram_9B            ds 1              
 ram_9C            ds 1              
 ram_9D            ds 1              
@@ -111,7 +105,7 @@ ram_DA            ds 1
 ; ------------------------------------------------------------------------------
   seg Code
   org $f000
-Entry
+Entry subroutine
           SEI                     ; disable interrupts
           CLD                     ; clear decimal mode
                                   
@@ -141,12 +135,15 @@ Main_Loop subroutine
           LDA #$00                ; get ready to turn it off
           STA WSYNC               ; third line
           STA VSYNC               ; done with v-sync
-                                  
+  .ifconst PAL
+          LDA #$4C                ; start the overscan timer
+  .else
           LDA #$2D                ; start the overscan timer
+  .endif
           STA TIM64T              
                                   
           INC Frame_Count         
-          JSR LF44E               ; run the game logic
+          JSR Game_Logic          ; run the game logic
                                   
 ; Overscan                        
 .loop     LDA INTIM               ; wait for the overscan timer to finish
@@ -168,13 +165,13 @@ Main_Loop subroutine
 ; Temp in ZP is used as a mini state machine with the following possible values:
 ;     $FF - initial value
 ;     $00 - show frame/variation (2 digits) and player values (1 digit), Scan Lines 39 - 50
-;     $01 - show scores (3 digits each), Scan Lines 52 - 69
+;     $01 - show scores (3 digits each), Scan Lines 52 - 68
 ;     $02 - first row of marks, Scan Lines
 ;     $03 - second row of marks, Scan Lines
 ;     $04 - third row of marks, Scan Lines
 ;     $05 - fourth row of marks, Scan Lines
 ;     $06 - final value, draws rest of the screen
-Next_State subroutine
+Kernel_Next_State subroutine
           LDA #$00                ; (2 = 16) clear out our playfield shadows
           STA ram_D5              ; (3 = 19)
           STA ram_D6              ; (3 = 22)
@@ -185,7 +182,7 @@ Next_State subroutine
           STA CTRLPF              ; (3 = 37) 
           INC Temp                ; (5 = 42) move to the next state in Temp
           LDA Temp                ; (3 = 45) check to see if we are in the second state
-          BNE LF0AF               ; (2 = 47) yes, go to the score drawing portion
+          BNE Kernel_Init_Score   ; (2 = 47) yes, go to the score drawing portion
           
 ; Scan Lines 39 - 50
 ;
@@ -210,12 +207,12 @@ Kernel_Top_Digits subroutine
 ; what the next PF1 value will be for the left side when we get to the next odd scan line
           LDA Frame_Val           ; (3 = 47) get the value we are displaying on the left side (frame/variation)
           CMP #$10                ; (2 = 49) are we showing a 1 digit in the 10s place?
-          BCC LF07D               ; (2 = 51) no, skip loading the 1 digit value
+          BCC .skip               ; (2 = 51) no, skip loading the 1 digit value
           LDA Digits,X            ; (4 = 55) get the 0 digit PF value
           ORA #$20                ; (2 = 57) set the pixel for the 1 digit
           BNE .even               ; (3 = 60) skip to the next scan line
                                   
-LF07D     ASL                     ; (2 = 54) multiply A by 5 to get the offset into the Digits table
+.skip     ASL                     ; (2 = 54) multiply A by 5 to get the offset into the Digits table
           ASL                     ; (2 = 56)
           ADC Frame_Val           ; (3 = 59)
           ADC ram_D7              ; (3 = 62) add in the current line offset
@@ -246,25 +243,27 @@ LF07D     ASL                     ; (2 = 54) multiply A by 5 to get the offset i
           CPX #$06                ; (2 = 45) did we draw 6 lines yet?
           BCC Kernel_Top_Digits   ; (3 = 48) no, do this all over again
           
-Next_State_B
-          JMP Next_State          ; move to the next state
+Kernel_Next_State_B
+          JMP Kernel_Next_State   ; (3 = 51) move to the next state
 
 ; Scan Line 51
-LF0AF
+Kernel_Init_Score subroutine
           LDY #$02                ; (2 = 50) set the playfield colors to be in score mode
           STY CTRLPF              ; (3 = 53)
           LDX #$06                ; (2 = 55) we're going to do six sets of lines
           CMP #$01                ; (2 = 57) are we drawing the score or marks?
-          BEQ Kernel_Score        ; (2 = 58) draw the score 
-          JMP Kernel_Marks        ; (3 = 61) draw the marks
+          BEQ Kernel_Draw_Score   ; (2 = 58) draw the score 
+          JMP Kernel_Init_Marks   ; (3 = 61) draw the marks
           
-; Scan Lines 52 - 69
+; Scan Lines 52 - 68
 ;
-; The score area is 6 sets of 3 scan lines.  There are no WSYNCS within each set of 3 lines.
+; The score area is 5 sets of 3 scan lines, plus an additional 1 and a half scan lines for the
+; last set.  There are no WSYNCS within each set of 3 lines.
+;
 ; The code interweaves updating PF1 and PF2 at the right time with generating the values that
 ; will be used in PF1 and PF2 the next time through.
 
-Kernel_Score subroutine
+Kernel_Draw_Score subroutine
 ; Sub-Scan Line 1 -- uses the column 1 and 2 offsets to generate the PF1 values that will
 ; be used to draw the score
           STA WSYNC               ; (3 = 0) wait for the new line
@@ -294,7 +293,7 @@ Kernel_Score subroutine
           AND #$F0                ; (2 = 60) mask off the bottom 4 bits
           STA ram_D8              ; (3 = 63) store it into our right side PF1 shadow
           
-          LDY P2_Col_2_Offset     ; (3 = 66) oad the offset to the P2 tens digit
+          LDY P2_Col_2_Offset     ; (3 = 66) load the offset to the P2 tens digit
           LDA Digits,Y            ; (4 = 70) and get the pixels
           AND #$0F                ; (2 = 72) mask off the top 4 bits
           ORA ram_D8              ; (3 = 75) combine it with the value we just stored
@@ -304,7 +303,7 @@ Kernel_Score subroutine
           STA ram_D8              ; (3 = 2) store it into our right side PF1 shadow
           
           DEX                     ; (2 = 4) decrement our line count
-          BEQ Next_State_B        ; (2 = 6) move to the next state if we have no more lines
+          BEQ Kernel_Next_State_B ; (2 = 6) move to the next state if we have no more lines
           
           LDA ram_D7              ; (3 = 9) load our left side PF1 shadow value
           STA PF1                 ; (3 = 12) into PF1
@@ -354,82 +353,109 @@ Kernel_Score subroutine
           LDA ram_D6              ; (3 = 44) and our right side PF2 shadow value
           STA PF2                 ; (3 = 47) into PF2
      
-          JMP Kernel_Score        ; (3 = 50) do it again
+          JMP Kernel_Draw_Score   ; (3 = 50) do it again
  
-; Scan Lines -          
-Kernel_Marks subroutine
-          CMP #$06
-          BCC LF149
-          JMP LF1D1
-LF149     SBC #$01
-          ASL
-          TAY
-          INY
+; Scan Lines 68 - 70, 79 - 81, 90 - 92, 101 - 103, 112    
+Kernel_Init_Marks subroutine
+          CMP #$06                ; (2 = 63) are we done with drawing marks?
+          BCC .skip               ; (2 = 65) nope, setup for the next row
+          JMP LF1D1               ; (3 = 68) yes, move onto the next section
+          
+; calculate the offset into the Marks_Lo and Marks_Hi tables for both players
+;
+; in this section of the kernel, the columns are opposite of what they were for the score.
+; columm 3 is on the left and column 1 is on the right.
+.skip     SBC #$01                ; calculate the offset for the row
+          ASL                     ; into the Marks_Array
+          TAY                     ; 
+          INY                     ; start with P2
           LDX #$01
-LF150     LDA ram_93,Y
-          AND #$03
+          
+.loop     LDA Marks_Array,Y       ; get the marks value
+          AND #$03                ; get the bottom two bits
+          ASL                     ; and multiply by 4
           ASL
-          ASL
-          STA P1_Col_3_Offset,X
-          LDA ram_93,Y
-          AND #$0C
-          STA P1_Col_2_Offset,X
-          LDA ram_93,Y
-          AND #$30
+          STA P1_Col_3_Offset,X   ; store it into the column 3 offset
+          
+          LDA Marks_Array,Y       ; get the marks value again
+          AND #$0C                ; get the 2nd two bits
+          STA P1_Col_2_Offset,X   ; and store it into the column 2 offset
+          
+          LDA Marks_Array,Y       ; get the marks value one more time
+          AND #$30                ; get the 3rd set of two bits
+          LSR                     ; and divide by 4
           LSR
-          LSR
-          CMP #$08
-          BNE LF16C
-          ASL
-LF16C     STA P1_Col_1_Offset,X
-          DEY
-          DEX
-          BPL LF150
-LF172     STA WSYNC
-          LDY P1_Col_3_Offset
-          LDA Marks_Hi,Y
-          STA ram_D5
-          LDY P1_Col_2_Offset
-          LDA Marks_Lo,Y
-          ORA ram_D5
-          STA PF1
-          STA ram_D5
-          LDY P1_Col_1_Offset
-          LDA Marks_Lo,Y
-          STA PF2
-          STA ram_D6
-          LDA ram_D7
-          STA PF1
-          LDY P2_Col_1_Offset
-          LDA Marks_Lo,Y
-          STA PF2
-          STA ram_D8
-          LDY P2_Col_3_Offset
-          LDA Marks_Hi,Y
-          STA ram_D7
-          LDY P2_Col_2_Offset
-          LDA Marks_Lo,Y
-          ORA ram_D7
-          STA ram_D7
-          LDA ram_D5
-          STA PF1
-          LDA ram_D6
-          STA PF2
-          INC P1_Col_3_Offset
-          INC P2_Col_3_Offset
-          INC P1_Col_2_Offset
-          INC P2_Col_2_Offset
-          INC P2_Col_1_Offset
-          INC P1_Col_1_Offset
-          LDA ram_D7
-          STA PF1
-          LDA ram_D8
-          STA PF2
-          LDA P1_Col_3_Offset
-          AND #$03
-          BNE LF172
-          JMP Next_State
-LF1D1     STA WSYNC
+          CMP #$08                ; check to see if we have a spare?
+          BNE .skipFlip           ; not a spare -- skip over flipping it
+          ASL                     ; multiply by 2 to get to the flipped spare
+.skipFlip STA P1_Col_1_Offset,X   ; store into the column 1 offset
+
+          DEY                     ; move to the next index for Marks_Array
+          DEX                     ; move to the next player
+          BPL .loop               ; update again for P1
+          
+; Scan Lines - 71 - 78, 82 - 89, 93 - 100, 104 - 111
+Kernel_Draw_Marks subroutine
+; Sub-Scan Line 1
+          STA WSYNC               ; (3 = 0) wait for the new line
+          
+          LDY P1_Col_3_Offset     ; (3 = 3) get the offset for column 3, P1
+          LDA Marks_Hi,Y          ; (4 = 7) and load the row from the Marks_Hi table
+          STA ram_D5              ; (3 = 10) store it off temporarily
+          LDY P1_Col_2_Offset     ; (3 = 13) get the offset for column 2, P1
+          LDA Marks_Lo,Y          ; (4 = 17) and load the row from the Marks_Lo table
+          ORA ram_D5              ; (3 = 20) combine it with the high
+          STA PF1                 ; (3 = 23) put it into PF1
+          STA ram_D5              ; (3 = 26) and save it for later use
+          
+          LDY P1_Col_1_Offset     ; (3 = 29) get the offset for column 1, P1
+          LDA Marks_Lo,Y          ; (4 = 33) and load the row from the Marks_Lo table
+          STA PF2                 ; (3 = 36) put it into PF2
+          STA ram_D6              ; (3 = 39) and save it for later use as well
+          
+          LDA ram_D7              ; (3 = 42) get the value for the column 3 and 2 for P2
+          STA PF1                 ; (3 = 45) put it into PF1
+          
+          LDY P2_Col_1_Offset     ; (3 = 48) get the offset for column 1, P2
+          LDA Marks_Lo,Y          ; (4 = 52) and load the row from the Marks_Lo table
+          STA PF2                 ; (3 = 55) put it into PF2
+          STA ram_D8              ; (3 = 58) and save it for later use as well
+          
+          LDY P2_Col_3_Offset     ; (3 = 61) get the offset for column 3, P2
+          LDA Marks_Hi,Y          ; (4 = 65) and load the row from the Marks_Hi table
+          STA ram_D7              ; (3 = 68) store it off temporarily
+          LDY P2_Col_2_Offset     ; (3 = 71) get the offset for column 2, P2
+          LDA Marks_Lo,Y          ; (4 = 75) and load the row from the Marks_Lo table
+          
+; Sub-Scan Line 2 
+          ORA ram_D7              ; (3 = 2) combine it with the high          
+          STA ram_D7              ; (3 = 5) save it for later use
+          
+          LDA ram_D5              ; (3 = 8) get the value for P1 PF1 we calculated earlier
+          STA PF1                 ; (3 = 11) store it in PF1
+          LDA ram_D6              ; (3 = 14) get the value for P1 PF2
+          STA PF2                 ; (3 = 17) store it in PF2
+          
+          INC P1_Col_3_Offset     ; (5 = 22) increment each of our offsets
+          INC P2_Col_3_Offset     ; (5 = 27)
+          INC P1_Col_2_Offset     ; (5 = 32)
+          INC P2_Col_2_Offset     ; (5 = 37)
+          INC P2_Col_1_Offset     ; (5 = 42)
+          INC P1_Col_1_Offset     ; (5 = 47)
+          
+          LDA ram_D7              ; (3 = 50) get the value for P2 PF1 we calculated earlier
+          STA PF1                 ; (3 = 53) store it in PF1
+          LDA ram_D8              ; (3 = 56) get the value for P1 PF2
+          STA PF2                 ; (3 = 59) store it in PF2
+          
+          LDA P1_Col_3_Offset     ; (3 = 62) get the offset for column 3, P1
+          AND #$03                ; (2 = 64) mask just the bottom 2 bits
+          BNE Kernel_Draw_Marks   ; (2 = 66) if it's not zero, we still have rows to draw
+          JMP Kernel_Next_State   ; (3 = 69) move to the next state
+          
+; Scan Line 113
+LF1D1 subroutine
+          STA WSYNC
           LDA #$10
           STA $0A
           LDX Player_Val
@@ -445,6 +471,8 @@ LF1D1     STA WSYNC
           LDA #$25
           STA NUSIZ0
           LDX #$2D
+
+; Scan Line 114   
 LF1F1     STA WSYNC
           LDA ram_D0
           CPX #$22
@@ -480,6 +508,7 @@ LF222     CPY #$0C
           JMP LF231
 LF22F     LDY Temp
 LF231     STY COLUP1
+
 LF233     STA WSYNC
           STA GRP1
           LDY ram_D5
@@ -493,6 +522,7 @@ LF233     STA WSYNC
           STA GRP0
 LF249     DEX
           BPL LF1F1
+          
           STA WSYNC
           LDA ram_CF
           STA COLUBK
@@ -500,9 +530,14 @@ LF249     DEX
           STA GRP0
           STA WSYNC
           STA WSYNC
+          
           LDA ram_D0
           STA COLUBK
+  .ifconst PAL
+          LDA #$58
+  .else
           LDA #$39
+  .endif
           STA TIM64T
           LDA SWCHB
           ROR
@@ -619,6 +654,7 @@ LF334     LDA LF78A,X
           STA ram_C3,X
           DEX
           BPL LF334
+          
           STA WSYNC
           LDY #$0B
 LF34E     DEY
@@ -750,11 +786,16 @@ LF43B     DEX
 LF440     DEC ram_D5
           BPL LF3DE
           STX ram_AE
+          
 LF446     LDA INTIM
           BNE LF446
           JMP Main_Loop
-          
-LF44E subroutine
+ 
+; ------------------------------------------------------------------------------
+;   End Of Kernel Code
+; ------------------------------------------------------------------------------
+         
+Game_Logic subroutine
           LDA ram_81
           BPL LF497
           LDX Player_Val
@@ -1031,6 +1072,7 @@ LF669     INY
           SEC
           SBC #$0F
           BPL LF669
+          
           STA WSYNC
           CLC
           ADC #$07
@@ -1043,6 +1085,7 @@ LF669     INY
 LF67C     DEY
           BPL LF67C
           STA RESP1,X
+          
           STA WSYNC
           STA HMOVE
           DEX
@@ -1149,8 +1192,8 @@ LF714     TYA
           ORA Player_Val
           TAY
           LDA Temp
-          ORA ram_93,Y
-          STA ram_93,Y
+          ORA Marks_Array,Y
+          STA Marks_Array,Y
           RTS
 
 ; ------------------------------------------------------------------------------
@@ -1234,7 +1277,10 @@ Digits
      .byte %11101110  ; |XXX XXX |         
      .byte %00100010  ; |  X   X |
      .byte %11101110  ; |XXX XXX |
-     
+   
+; TODO: the fourth row of these must be aligned to a 4 byte boundary or the kernel code won't
+; know that it is done drawing the row of marks.  This should be enforced by the assembler if
+; possible
 Marks_Lo         
      .byte %00000000  ; |        |
      .byte %00000000  ; |        |
