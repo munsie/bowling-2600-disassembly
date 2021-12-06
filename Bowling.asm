@@ -7,6 +7,8 @@
 ; ------------------------------------------------------------------------------
 
   .processor 6502
+  
+TIA_BASE_READ_ADDRESS = $30
   .include vcs.h
 
 ; ------------------------------------------------------------------------------
@@ -479,7 +481,7 @@ Kernel_Draw_Marks .subroutine
 LF1D1 .subroutine
           STA WSYNC
           LDA #$10
-          STA $0A
+          STA CTRLPF
           LDX Player_Val
           LDA ram_CD,X
           STA ram_D8
@@ -619,14 +621,16 @@ LF2BD     LDX #$03
 LF2D1     STA Player_Val
 LF2D3     LDA #$01
           STA ram_A8
-LF2D7     LDA SWCHB
+          
+LF2D7     LDA SWCHB               ; load the value of SWCHB
           LDX #$07
-          LDY #$06
-          AND #$08
-          BEQ LF2E6
+          LDY #$06                ; point to the B&W table
+          AND #$08                ; check if the color switch is set
+          BEQ .skipColor          ; is it set to black and white?
           LDX #$F7
-          LDY #$00
-LF2E6     LDA ram_81
+          LDY #$00                ; point to the color table
+.skipColor
+          LDA ram_81
           EOR #$FF
           BMI LF2EE
           LDX #$FF
@@ -634,7 +638,7 @@ LF2EE     AND ram_9F
           STA ram_D8
           STX ram_D7
           LDX #$05
-LF2F6     LDA LF722,Y
+LF2F6     LDA Color_LUT,Y
           EOR ram_D8
           AND ram_D7
           STA COLUP0,X
@@ -642,6 +646,7 @@ LF2F6     LDA LF722,Y
           INY
           DEX
           BPL LF2F6
+          
           LDA SWCHA
           EOR #$FF
           CMP ram_85
@@ -682,7 +687,7 @@ LF334     LDA LF78A,X
           LDY #$0B
 LF34E     DEY
           BNE LF34E
-          STA $0010,Y
+          STA RESP0,Y
 LF354     LDY ram_8D
           CPY #$05
           BEQ LF378
@@ -700,8 +705,8 @@ LF354     LDY ram_8D
           LDA ram_A8
           ADC LF7F7,Y
           STA ram_A9
-LF378     LDA $30
-          ORA $32
+LF378     LDA CXM0P
+          ORA CXP0FB
           ASL
           BPL LF3D8
           SEC
@@ -741,7 +746,7 @@ LF3BB     INC ram_A9
 LF3BD     LDY Player_Val
           CLC
           LDA SWCHB
-          AND LF7FE,Y
+          AND Difficulty_Switch_Mask,Y
           BEQ LF3CB
           LDA Frame_Count
           ASL
@@ -844,7 +849,7 @@ LF472     CLC
           BCS LF47F
           STA ram_A8
           INC ram_A9
-LF47F     LDA $3C,X
+LF47F     LDA INPT4,X
           BMI LF497
           LDA #$00
           STA ram_90
@@ -1221,16 +1226,22 @@ LF714     TYA
 
 ; ------------------------------------------------------------------------------
 
-LF722
-     .byte $00               
-     .byte $58               
-     .byte $26, $84          
-     .byte $D8               
-     .byte $88               
-     .byte $00               
-     .byte $06, $0A          
-     .byte $06, $00          
-     .byte $0E
+Color_LUT
+; Color Mode
+     .byte $00        ; REFP0 value
+     .byte $58        ; CTRLPF value
+     .byte $26        ; COLUBK value
+     .byte $84        ; COLUPF value
+     .byte $D8        ; COLUP1 value
+     .byte $88        ; COLUP0 value
+                    
+; Black & White Mode
+     .byte $00        ; REFP0 value
+     .byte $06        ; CTRLPF value
+     .byte $0A        ; COLUBK value
+     .byte $06        ; COLUPF value
+     .byte $00        ; COLUP1 value
+     .byte $0E        ; COLUP0 value
 
 ; Ball/Missile enable flags for bowling ball, or'd together
 ;   $01 - enable M0
@@ -1385,43 +1396,62 @@ LF7B2
      .byte $80               
      .byte $40               
      .byte $C0, $20            
-     .byte $A0, $38            
-     .byte $30, $30            
-     .byte $30, $30
+     .byte $A0
      
+; Bowler Frame 0
+     .byte %00111000  ; |  XXX   |
+     .byte %00110000  ; |  XX    |
+     .byte %00110000  ; |  XX    |
+     .byte %00110000  ; |  XX    |
+     .byte %00110000  ; |  XX    |
 LF7BD            
-     .byte $30, $38       
-     .byte $38               
-     .byte $3E, $3F, $39         
-     .byte $38               
-     .byte $10, $38            
-     .byte $3C               
-     .byte $38               
-     .byte $1B               
-     .byte $12               
-     .byte $12               
-     .byte $12               
-     .byte $16, $14            
-     .byte $9C               
-     .byte $DC               
-     .byte $5C               
-     .byte $7C               
-     .byte $3C               
-     .byte $1C               
-     .byte $08               
-     .byte $1C               
-     .byte $1E, $1C, $C3         
-     .byte $82               
-     .byte $82               
-     .byte $C2               
-     .byte $66, $2C            
-     .byte $38               
-     .byte $38               
-     .byte $3B               
-     .byte $3E, $3C, $38         
-     .byte $10, $38            
-     .byte $3C               
-     .byte $38
+     .byte %00110000  ; |  XX    |
+     .byte %00111000  ; |  XXX   |
+     .byte %00111000  ; |  XXX   |
+     .byte %00111110  ; |  XXXXX |
+     .byte %00111111  ; |  XXXXXX|
+     .byte %00111001  ; |  XXX  X|
+     .byte %00111000  ; |  XXX   |
+     .byte %00010000  ; |   X    |
+     .byte %00111000  ; |  XXX   |
+     .byte %00111100  ; |  XXXX  |
+     .byte %00111000  ; |  XXX   |
+     
+; Bowler Frame 1             
+     .byte %00011011  ; |   XX XX|             
+     .byte %00010010  ; |   X  X |
+     .byte %00010010  ; |   X  X |
+     .byte %00010010  ; |   X  X |
+     .byte %00010110  ; |   X XX |
+     .byte %00010100  ; |   X X  |
+     .byte %10011100  ; |X  XXX  |
+     .byte %11011100  ; |XX XXX  |
+     .byte %01011100  ; | X XXX  |
+     .byte %01111100  ; | XXXXX  |
+     .byte %00111100  ; |  XXXX  |
+     .byte %00011100  ; |   XXX  |
+     .byte %00001000  ; |    X   |
+     .byte %00011100  ; |   XXX  |
+     .byte %00011110  ; |   XXXX |
+     .byte %00011100  ; |   XXX  |
+
+; Bowler Frame 2
+     .byte %11000011  ; |XX    XX|
+     .byte %10000010  ; |X     X |
+     .byte %10000010  ; |X     X |
+     .byte %11000010  ; |XX    X |
+     .byte %01100110  ; | XX  XX |
+     .byte %00101100  ; |  X XX  |
+     .byte %00111000  ; |  XXX   |
+     .byte %00111000  ; |  XXX   |
+     .byte %00111011  ; |  XXX XX|
+     .byte %00111110  ; |  XXXXX |
+     .byte %00111100  ; |  XXXX  |
+     .byte %00111000  ; |  XXX   |
+     .byte %00010000  ; |   X    |
+     .byte %00111000  ; |  XXX   |
+     .byte %00111100  ; |  XXXX  |
+     .byte %00111000  ; |  XXX   |
 
 LF7E8               
      .byte $B8
@@ -1455,5 +1485,6 @@ LF7F7
   .org $f7fc
 Reset_Vector
      .word Entry
-LF7FE
-     .byte $40, $80
+Difficulty_Switch_Mask
+     .byte $40        ; SWCHB mask for P0 difficulty switch
+     .byte $80        ; SWCHB mask for P1 difficulty switch
